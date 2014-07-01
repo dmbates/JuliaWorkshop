@@ -11,3 +11,5 @@ Pkg.add("IJulia")
 to be able to work with these notebooks.  You can view the notebooks at
 
 (http://nbviewer.ipython.org/github/dmbates/JuliaWorkshop/)
+
+In the July 8 session I will cover an example of bootstrapping.
