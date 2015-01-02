@@ -14,12 +14,20 @@ const libR = joinpath(RHOME,"lib","libR.so")
 # type
 typealias SEXP Ptr{Void}
 
-@doc """Initialize an embedded R. Sample usage: initR(["Rembed","--silent"])""" ->
+@doc "Initialize an embedded R from an argv vector, usually in the 0-argument form"->
 function initR(argv::Vector{ASCIIString})
     i = ccall((:Rf_initEmbeddedR,libR),Cint,(Cint,Ptr{Ptr{Uint8}}),
               length(argv),argv)
     i > 0 ? i : error("Failure to initialize embedded R")
 end
+initR() = initR(["Rembed","--silent"])
+
+@doc "Evaluate expression expr in environment env"->
+Reval(expr::SEXP,env::SEXP) = ccall((:Rf_eval,libR),SEXP,(SEXP,SEXP),expr,env)
+Reval(expr::SEXP) = Reval(expr,globalEnv)
+
+@doc "return the first element of an SEXP as an Complex128 value" ->
+asComplex(s::SEXP) = ccall((:Rf_asComplex,libR),Complex128,(SEXP,),s)
 
 @doc "return the first element of an SEXP as an Cint (i.e. Int32)" ->
 asInteger(s::SEXP) = ccall((:Rf_asInteger,libR),Cint,(SEXP,),s)
@@ -32,6 +40,11 @@ asReal(s::SEXP) = ccall((:Rf_asReal,libR),Cdouble,(SEXP,),s)
 
 @doc "Symbol lookup for R, installing the symbol if necessary" ->
 install(nm::ASCIIString) = ccall((:Rf_install,libR),SEXP,(Ptr{Uint8},),nm)
+
+@doc "find object with name sym in environment env"->
+findVar(sym::SEXP,env::SEXP) = ccall((:Rf_findVar,libR),SEXP,(SEXP,SEXP),sym,env)
+findVar(nm::ASCIIString,env::SEXP) = findVar(install(nm),env)
+findVar(nm::ASCIIString) = findVar(install(nm),unsafe_load(cglobal((:R_globalEnv,libR),SEXP),1))
 
 ## predicates applied to an SEXP
 for sym in (:isArray,:isComplex,:isEnvironment,:isExpression,:isFactor,
